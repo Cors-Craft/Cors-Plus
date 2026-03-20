@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BotPanel — لوحة التحكم</title>
+<link rel="icon" type="image/png" href="Logo.png"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0b0c0f;--bg2:#111318;--bg3:#181c24;--border:#ffffff0f;--border2:#ffffff18;--fire1:#ff7814;--fire2:#ffd230;--fire3:#dc2828;--text:#f5f0e0;--muted:#8a7a65;--muted2:#5a4a3a;--green:#37d75a;--discord:#5865F2;--radius:14px;--font:'IBM Plex Sans Arabic',sans-serif;--mono:'JetBrains Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.6}
+.glow-bg{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
+.glow-bg.g1{width:600px;height:600px;bottom:-200px;right:-100px;background:radial-gradient(circle,#ff781420,transparent 70%)}
+.glow-bg.g2{width:400px;height:400px;top:-100px;left:-100px;background:radial-gradient(circle,#ffd23012,transparent 70%)}
+.app{position:relative;z-index:1;display:flex;min-height:100vh}
+.sidebar{width:240px;min-width:240px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--fire3),var(--fire1));display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:15px;font-weight:700}.logo-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.nav-section{padding:8px 12px 4px;font-size:10px;font-weight:600;color:var(--muted2);letter-spacing:.08em;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;margin:1px 8px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--muted);transition:all .18s;border:none;background:none;width:calc(100% - 16px);text-align:right}
+.nav-item:hover{background:var(--border);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,#ff781418,#ffd23010);color:var(--fire1);border:1px solid #ff781428}
+.nav-item .icon{font-size:15px;min-width:18px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:16px 12px 0;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg3);border:1px solid var(--border)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--discord);display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:13px;font-weight:600}.user-tag{font-size:11px;color:var(--muted)}
+.logout-btn{margin-top:8px;width:100%;padding:8px;border:1px solid var(--border);background:none;color:var(--muted);border-radius:8px;cursor:pointer;font-size:12px;font-family:var(--font);transition:all .18s}
+.logout-btn:hover{border-color:#dc2828;color:#dc2828}
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:18px;font-weight:700}.topbar-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.guild-selector{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;font-family:var(--font);color:var(--text);font-size:13px;transition:border-color .18s}
+.guild-selector:hover{border-color:var(--border2)}
+.guild-icon{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,var(--fire3),var(--fire1));display:flex;align-items:center;justify-content:center;font-size:12px}
+.content{flex:1;padding:32px;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px}
+.stat-card.fire::before{background:linear-gradient(90deg,var(--fire3),var(--fire1),var(--fire2))}
+.stat-card.green::before{background:var(--green)}.stat-card.blue::before{background:var(--discord)}.stat-card.gold::before{background:var(--fire2)}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.stat-value{font-size:32px;font-weight:700;font-family:var(--mono)}.stat-icon{position:absolute;top:16px;left:16px;font-size:20px;opacity:.4}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--bg3);border-bottom:1px solid var(--border)}
+th{padding:12px 16px;font-size:11px;font-weight:600;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.05em}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+td{padding:13px 16px;font-size:13px}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);font-family:var(--mono);font-size:12px;font-weight:600}
+.rank-badge.gold{background:#ffd23018;border-color:#ffd23040;color:var(--fire2)}.rank-badge.silver{background:#c0c0c018;border-color:#c0c0c040;color:#c0c0c0}.rank-badge.bronze{background:#cd7f3218;border-color:#cd7f3240;color:#cd7f32}
+.xp-bar-wrap{display:flex;align-items:center;gap:10px}
+.xp-bar{flex:1;height:6px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.xp-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--fire3),var(--fire1),var(--fire2));transition:width .5s ease}
+.xp-label{font-size:11px;color:var(--muted);font-family:var(--mono);min-width:55px}
+.user-cell{display:flex;align-items:center;gap:10px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--discord);display:flex;align-items:center;justify-content:center;font-size:13px}
+.form-group{margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=url],input[type=color],textarea,select{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:13px;font-family:var(--font);transition:border-color .18s,box-shadow .18s;outline:none}
+input[type=text]:focus,input[type=url]:focus,textarea:focus,select:focus{border-color:var(--fire1);box-shadow:0 0 0 3px #ff781415}
+textarea{min-height:90px;resize:vertical;line-height:1.5}
+select option{background:var(--bg3)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:var(--font);transition:all .18s}
+.btn-primary{background:linear-gradient(135deg,var(--fire3),var(--fire1));color:#fff}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--border2)}
+.btn-danger{background:#dc282818;border:1px solid #dc282840;color:#dc2828}
+.btn-danger:hover{background:#dc282830}
+.btn-success{background:#37d75a20;border:1px solid #37d75a40;color:var(--green)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--muted2);border-radius:99px;transition:.25s}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;bottom:3px;right:3px;background:#fff;border-radius:50%;transition:.25s}
+.toggle input:checked + .toggle-slider{background:var(--fire1)}
+.toggle input:checked + .toggle-slider::before{transform:translateX(-20px)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:12px;font-weight:500}
+.chip-fire{background:#ff781420;border:1px solid #ff781440;color:var(--fire1)}
+.chip-green{background:#37d75a20;border:1px solid #37d75a40;color:var(--green)}
+.chip-blue{background:#5865f220;border:1px solid #5865f240;color:var(--discord)}
+.chip-red{background:#dc282820;border:1px solid #dc282840;color:#dc2828}
+.chip-gold{background:#ffd23020;border:1px solid #ffd23040;color:var(--fire2)}
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--bg3);transition:border-color .18s}
+.list-item:hover{border-color:var(--border2)}
+.list-item-info{flex:1}.list-item-title{font-size:13px;font-weight:600}.list-item-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.list-item-actions{display:flex;gap:6px;align-items:center}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);text-align:center}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}.empty-text{font-size:14px}
+.login-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:48px 52px;max-width:420px;width:100%;position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--fire3),var(--fire1),var(--fire2))}
+.login-logo{width:64px;height:64px;border-radius:16px;margin:0 auto 20px;background:linear-gradient(135deg,var(--fire3),var(--fire1));display:flex;align-items:center;justify-content:center;font-size:30px}
+.login-title{font-size:24px;font-weight:700;margin-bottom:8px}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
+.btn-discord{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:12px;background:var(--discord);color:#fff;font-size:15px;font-weight:700;font-family:var(--font);border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-discord:hover{background:#4752c4;transform:translateY(-2px)}
+.discord-logo{width:22px;height:22px;fill:#fff}
+.login-footer{margin-top:20px;font-size:11px;color:var(--muted)}
+.toast-container{position:fixed;bottom:24px;left:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:13px;font-weight:500;animation:slideIn .3s ease;box-shadow:0 8px 32px #0009}
+.toast.success{border-color:#37d75a40;color:var(--green)}.toast.error{border-color:#dc282840;color:#dc2828}
+@keyframes slideIn{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.modal-overlay{display:none;position:fixed;inset:0;background:#000a;z-index:100;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;animation:modalIn .2s ease}
+@keyframes modalIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;border-radius:6px;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.embed-preview{border-right:4px solid var(--fire1);background:var(--bg3);border-radius:6px;padding:14px 16px;margin-top:16px}
+.embed-title{font-size:15px;font-weight:700;margin-bottom:6px}
+.embed-desc{font-size:13px;color:var(--muted);line-height:1.5;white-space:pre-wrap}
+.embed-footer-p{font-size:11px;color:var(--muted2);margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+.embed-image-p{width:100%;border-radius:6px;margin-top:10px;max-height:200px;object-fit:cover}
+.embed-thumb-p{width:64px;height:64px;border-radius:6px;object-fit:cover;float:left;margin-right:12px}
+.perm-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:9px;margin-bottom:8px;background:var(--bg3)}
+.perm-cmd{font-family:var(--mono);font-size:12px;color:var(--fire1);background:#ff781415;padding:2px 8px;border-radius:6px}
+.perm-role{flex:1;font-size:13px}
+.perm-state.allow{color:var(--green);font-weight:600;font-size:12px}.perm-state.deny{color:#dc2828;font-weight:600;font-size:12px}
+.alias-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:9px;margin-bottom:8px;background:var(--bg3)}
+.alias-key{font-family:var(--mono);font-size:13px;color:var(--fire2);min-width:80px}
+.alias-arrow{color:var(--muted);font-size:12px}.alias-target{font-family:var(--mono);font-size:13px;color:var(--muted);flex:1}
+.roles-container{display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;min-height:50px;max-height:200px;overflow-y:auto}
+.role-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:99px;font-size:12px;font-weight:500;cursor:pointer;border:2px solid transparent;transition:all .15s;background:var(--bg2)}
+.role-btn:hover{transform:scale(1.03)}.role-btn.selected{border-color:var(--fire1) !important;background:#ff781420 !important}
+.rr-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.rr-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.rr-title{font-size:14px;font-weight:700}.rr-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.rr-option{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);font-size:13px;margin:4px 4px 4px 0}
+.rr-option .rr-emoji{font-size:18px}
+.channel-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto}
+.channel-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;transition:all .15s}
+.channel-item:hover{border-color:var(--fire1);background:#ff781410}.channel-item.selected{border-color:var(--fire1);background:#ff781418}
+.info-box{background:var(--bg3);border:1px solid var(--fire1);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--muted);line-height:1.6}
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────── */
+@media(max-width:1024px){
+  .sidebar{width:200px;min-width:200px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .content{padding:20px}
+}
+@media(max-width:768px){
+  .app{flex-direction:column}
+  .sidebar{
+    width:100%;min-width:unset;height:auto;
+    position:fixed;bottom:0;top:auto;left:0;right:0;
+    flex-direction:row;padding:0;z-index:50;
+    border-left:none;border-top:1px solid var(--border);
+    overflow-x:auto;overflow-y:hidden;
+  }
+  .sidebar-logo{display:none}
+  .sidebar-footer{display:none}
+  .nav-section{display:none}
+  .nav-item{
+    flex-direction:column;gap:3px;padding:10px 14px;
+    font-size:10px;min-width:60px;border-radius:0;
+    margin:0;width:auto;white-space:nowrap;
+    border:none !important;background:none !important;
+  }
+  .nav-item.active{color:var(--fire1);border-bottom:2px solid var(--fire1) !important}
+  .nav-item .icon{font-size:18px}
+  .main{padding-bottom:70px}
+  .topbar{padding:12px 16px}
+  .topbar-title{font-size:15px}
+  .content{padding:14px}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat-value{font-size:24px}
+  .row2,.row3{grid-template-columns:1fr}
+  .table-wrap{font-size:12px}
+  th,td{padding:8px 10px}
+  .modal{margin:8px;max-width:calc(100vw - 16px) !important;max-height:92vh}
+  .modal-wide{max-width:calc(100vw - 16px) !important}
+  .card{padding:16px}
+  .list-item{flex-wrap:wrap;gap:8px}
+  .list-item-actions{width:100%;justify-content:flex-end}
+  .guild-selector span:last-child{display:none}
+  #currentGuildName{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .perm-card{padding:12px}
+  .step-indicator{gap:2px}
+  .step-label{display:none}
+  .rr-step-lbl{display:none}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .stat-value{font-size:20px}
+  .topbar{flex-direction:column;align-items:flex-start;gap:8px}
+  .guild-selector{width:100%}
+  #currentGuildName{max-width:none}
+  .nav-item{padding:8px 10px;min-width:52px;font-size:9px}
+  .nav-item .icon{font-size:16px}
+  .modal{margin:4px;max-width:calc(100vw - 8px) !important}
+  .content{padding:10px}
+  .card-header{flex-direction:column;align-items:flex-start;gap:8px}
+  th:nth-child(5),td:nth-child(5){display:none}
+}
+
+@media(max-width:768px){
+  .sidebar.mobile-open{
+    bottom:60px !important;top:0 !important;height:calc(100vh - 60px) !important;
+    flex-direction:column !important;width:240px !important;right:0 !important;left:auto !important;
+    overflow-y:auto !important;overflow-x:hidden !important;
+    box-shadow:-4px 0 24px rgba(0,0,0,.6);z-index:100;
+  }
+  .sidebar.mobile-open .sidebar-logo,.sidebar.mobile-open .nav-section,
+  .sidebar.mobile-open .sidebar-footer{display:flex !important}
+  .sidebar.mobile-open .nav-section{display:block !important}
+  .sidebar.mobile-open .sidebar-footer{display:block !important}
+  .sidebar.mobile-open .nav-item{flex-direction:row !important;min-width:unset !important;font-size:13px !important;padding:9px 20px !important;border-radius:9px !important;margin:1px 8px !important;width:calc(100% - 16px) !important}
+}
+.ep-btn{background:none;border:1px solid transparent;border-radius:8px;padding:5px;cursor:pointer;transition:background .15s;line-height:1}
+/* Mobile sidebar overlay (shown above bottom bar on small screens) */
+@media(max-width:768px){
+  .sidebar.mobile-open{
+    bottom:60px;top:0;height:auto;
+    flex-direction:column;width:240px;
+    overflow-y:auto;overflow-x:hidden;
+    box-shadow:-4px 0 24px rgba(0,0,0,.5);
+  }
+  .sidebar.mobile-open .sidebar-logo{display:flex}
+  .sidebar.mobile-open .nav-section{display:block}
+  .sidebar.mobile-open .nav-item{flex-direction:row;min-width:unset;font-size:13.5px;padding:9px 20px}
+  .sidebar.mobile-open .sidebar-footer{display:block}
+}
+.ep-btn:hover{background:var(--bg3);border-color:var(--border)}
+
+.rr-step{display:flex;align-items:center;gap:6px;flex:1}
+.rr-step-num{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .2s}
+.rr-step-lbl{font-size:11px;color:var(--muted);white-space:nowrap;transition:color .2s}
+.rr-step.active .rr-step-num{background:var(--fire1);border-color:var(--fire1);color:#fff}
+.rr-step.active .rr-step-lbl{color:var(--text)}
+.rr-step.done .rr-step-num{background:var(--green);border-color:var(--green);color:#fff}
+.rr-step.done .rr-step-lbl{color:var(--text)}
+.rr-step-line{flex:1;height:2px;background:var(--border);margin:0 4px}
+.msg-pick-item:hover{background:var(--bg3) !important}
+.msg-pick-item{border-right:3px solid transparent;transition:all .15s}
+
+.perm-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;transition:border-color .2s}
+.perm-card:hover{border-color:var(--border2)}
+.chip-red{background:#dc282820;border:1px solid #dc282840;color:#dc2828}
+</style>
+</head>
+<body>
+<div class="glow-bg g1"></div><div class="glow-bg g2"></div>
+
+<!-- LOGIN -->
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">🔥</div>
+    <h1 class="login-title">لوحة تحكم البوت</h1>
+    <p class="login-sub">سجّل الدخول بحساب Discord للوصول إلى لوحة التحكم وإدارة البوت في سيرفرك</p>
+    <a href="#" class="btn-discord" onclick="loginWithDiscord()">
+      <svg class="discord-logo" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+      تسجيل الدخول عبر Discord
+    </a>
+    <p class="login-footer">نستخدم OAuth2 الرسمي من Discord — لن نصل إلى كلمة مرورك أبداً</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="app" style="display:none">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon" style="overflow:hidden;padding:0"><img src="Logo.png" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.parentElement.innerHTML='🔥'"></div>
+      <div><div class="logo-text">BotPanel</div><div class="logo-sub">v3.0</div></div>
+    </div>
+    <div class="nav-section">عام</div>
+    <button class="nav-item active" onclick="showPage('overview',this)"><span class="icon">📊</span> نظرة عامة</button>
+    <button class="nav-item" onclick="showPage('leaderboard',this)"><span class="icon">🏆</span> المتصدرون</button>
+    <div class="nav-section">الإعدادات</div>
+    <button class="nav-item" onclick="showPage('aliases',this)"><span class="icon">⚡</span> اختصارات الأوامر</button>
+    <button class="nav-item" onclick="showPage('permissions',this)"><span class="icon">🛡️</span> صلاحيات الأوامر</button>
+    <button class="nav-item" onclick="showPage('autoresponse',this)"><span class="icon">🤖</span> ردود تلقائية</button>
+    <button class="nav-item" onclick="showPage('embeds',this)"><span class="icon">🎨</span> إيمبدات</button>
+    <button class="nav-item" onclick="showPage('reactionroles',this)"><span class="icon">🎭</span> رتب قابلة للأخذ</button>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="sidebarAvatar">👤</div>
+        <div><div class="user-name" id="sidebarName">—</div><div class="user-tag" id="sidebarTag">—</div></div>
+      </div>
+      <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div><div class="topbar-title" id="pageTitle">نظرة عامة</div><div class="topbar-sub" id="pageSubtitle">إحصائيات وبيانات السيرفر</div></div>
+      <button class="guild-selector" onclick="openGuildModal()">
+        <div class="guild-icon">🏠</div><span id="currentGuildName">اختر سيرفراً</span><span style="color:var(--muted)">▾</span>
+      </button>
+    </div>
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div id="page-overview" class="page active">
+        <div class="stats-grid">
+          <div class="stat-card fire"><div class="stat-label">إجمالي الأعضاء</div><div class="stat-value" id="statMembers">—</div><div class="stat-icon">👥</div></div>
+          <div class="stat-card gold"><div class="stat-label">إجمالي الرسائل</div><div class="stat-value" id="statMessages">—</div><div class="stat-icon">💬</div></div>
+          <div class="stat-card green"><div class="stat-label">أعلى مستوى</div><div class="stat-value" id="statMaxLevel">—</div><div class="stat-icon">⭐</div></div>
+          <div class="stat-card blue"><div class="stat-label">إجمالي XP</div><div class="stat-value" id="statTotalXp">—</div><div class="stat-icon">🔥</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔥 أنشط الأعضاء</div>
+          <div class="card-sub">أعلى 5 أعضاء بالـ XP</div>
+          <div id="topPreview"><div class="empty"><div class="empty-icon">🔭</div><div class="empty-text">اختر سيرفراً أولاً</div></div></div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div id="page-leaderboard" class="page">
+        <div class="card">
+          <div class="card-title">🏆 لوحة المتصدرين</div>
+          <div class="card-sub">ترتيب الأعضاء حسب XP</div>
+          <div class="table-wrap">
+            <table><thead><tr><th>#</th><th>العضو</th><th>المستوى</th><th>XP</th><th>الرسائل</th></tr></thead>
+            <tbody id="leaderboardBody"><tr><td colspan="5"><div class="empty"><div class="empty-icon">🔭</div><div class="empty-text">اختر سيرفراً</div></div></td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALIASES -->
+      <div id="page-aliases" class="page">
+        <div class="card">
+          <div class="card-title">⚡ اختصارات الأوامر</div>
+          <div class="card-sub">اكتب الاختصار <strong style="color:var(--fire1)">وحده بدون بادئة</strong> في أي رسالة — مثلاً: كتابة <code style="color:var(--fire2)">r</code> يُشغّل <code style="color:var(--fire2)">/rank</code></div>
+          <button class="btn btn-primary" style="margin-bottom:16px" onclick="openModal('aliasModal')">+ إضافة اختصار</button>
+          <div id="aliasesList"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">لا توجد اختصارات بعد</div></div></div>
+        </div>
+      </div>
+
+      <!-- PERMISSIONS -->
+      <div id="page-permissions" class="page">
+        <div class="card-title" style="margin-bottom:6px">🛡️ صلاحيات الأوامر</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:20px">اختر لكل أمر: <strong>عام</strong> (الجميع) أو <strong>مخصص</strong> (رتب محددة فقط)</div>
+        <div id="permCards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+          <div class="empty" style="grid-column:1/-1"><div class="empty-icon">⏳</div><div class="empty-text">اختر سيرفراً أولاً</div></div>
+        </div>
+      </div>
+
+      <!-- AUTO RESPONSE -->
+      <div id="page-autoresponse" class="page">
+        <div class="card">
+          <div class="card-title">🤖 الردود التلقائية</div>
+          <div class="card-sub">يرد البوت تلقائياً عند وجود كلمة أو جملة في الرسالة</div>
+          <button class="btn btn-primary" style="margin-bottom:16px" onclick="openAddAR()">+ إضافة رد تلقائي</button>
+          <div id="arList"><div class="empty"><div class="empty-icon">🤖</div><div class="empty-text">لا توجد ردود تلقائية بعد</div></div></div>
+        </div>
+      </div>
+
+      <!-- EMBEDS -->
+      <div id="page-embeds" class="page">
+        <div class="card">
+          <div class="card-title">🎨 إيمبدات</div>
+          <div class="card-sub">أنشئ إيمبدات جاهزة وأرسلها في أي وقت — بالأمر <code style="color:var(--fire1)">/send-embed [الاسم]</code> أو مباشرة من هنا</div>
+          <button class="btn btn-primary" style="margin-bottom:16px" onclick="openEmbedModal()">+ إنشاء إيمبد</button>
+          <div id="embedsList"><div class="empty"><div class="empty-icon">🎨</div><div class="empty-text">لا توجد إيمبدات بعد</div></div></div>
+        </div>
+      </div>
+
+      <!-- REACTION ROLES -->
+      <div id="page-reactionroles" class="page">
+        <div class="card">
+          <div class="card-title">🎭 رتب قابلة للأخذ</div>
+          <div class="card-sub">أنشئ رسائل تفاعلية يمكن للأعضاء من خلالها اختيار رتبهم عبر أزرار أو قائمة</div>
+          <button class="btn btn-primary" style="margin-bottom:16px" onclick="openRRModal()">+ إنشاء رسالة رتب</button>
+          <div id="rrList"><div class="empty"><div class="empty-icon">🎭</div><div class="empty-text">لا توجد رسائل رتب بعد</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- GUILD MODAL -->
+<div class="modal-overlay" id="guildModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header"><div class="modal-title">🏠 اختر سيرفراً</div><button class="modal-close" onclick="closeModal('guildModal')">✕</button></div>
+    <div id="guildList"><div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">جاري التحميل…</div></div></div>
+  </div>
+</div>
+
+<!-- ALIAS MODAL -->
+<div class="modal-overlay" id="aliasModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">⚡ إضافة اختصار</div><button class="modal-close" onclick="closeModal('aliasModal')">✕</button></div>
+    <div class="info-box">💡 الاختصار يعمل <strong style="color:var(--fire1)">بدون بادئة</strong> — فقط اكتب الاختصار وحده في الرسالة<br>مثال: <code style="color:var(--fire2)">r</code> أو <code style="color:var(--fire2)">رانك</code> سيُشغّل الأمر مباشرة</div>
+    <div class="form-group"><label>الاختصار (نص بدون بادئة)</label><input type="text" id="aliasKey" placeholder="مثال: r أو رانك"/></div>
+    <div class="form-group"><label>الأمر المستهدف</label>
+      <select id="aliasTarget">
+        <option value="rank">rank — بطاقة الرانك</option><option value="user">user — معلومات عضو</option>
+        <option value="server">server — معلومات السيرفر</option><option value="avatar">avatar — صورة عضو</option>
+        <option value="top">top — المتصدرون</option><option value="send-embed">send-embed — إرسال إيمبد</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('aliasModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveAlias()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERM MODAL -->
+<div class="modal-overlay" id="permModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div><div class="modal-title" id="permModalTitle">🛡️ إعداد أمر</div><div style="font-size:12px;color:var(--muted);margin-top:2px" id="permModalCmd"></div></div>
+      <button class="modal-close" onclick="closeModal('permModal')">✕</button>
+    </div>
+    <!-- نوع الوصول -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div id="permTypePublic" onclick="setPermType('public')"
+        style="padding:14px;border:2px solid var(--fire1);border-radius:12px;cursor:pointer;text-align:center;background:#ff781410">
+        <div style="font-size:22px;margin-bottom:4px">🌍</div>
+        <div style="font-size:13px;font-weight:700">عام</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">الجميع يستخدمه</div>
+      </div>
+      <div id="permTypeCustom" onclick="setPermType('custom')"
+        style="padding:14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;text-align:center">
+        <div style="font-size:22px;margin-bottom:4px">🎯</div>
+        <div style="font-size:13px;font-weight:700">مخصص</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">رتب محددة فقط</div>
+      </div>
+    </div>
+    <!-- قائمة الرتب (تظهر فقط في وضع مخصص) -->
+    <div id="permRolesSection" style="display:none">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase">الرتب المسموح لها</div>
+      <div id="permRolesList" style="display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:2px"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">انقر على الرتبة لإضافتها أو إزالتها</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('permModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="savePermNew()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTO RESPONSE MODAL -->
+<div class="modal-overlay" id="arModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" id="arModalTitle">🤖 إضافة رد تلقائي</div><button class="modal-close" onclick="closeModal('arModal')">✕</button></div>
+    <div class="form-group"><label>الكلمة / الجملة المحفزة</label><input type="text" id="arTrigger" placeholder="مثال: مرحبا"/></div>
+    <div class="form-group"><label>نوع المطابقة</label>
+      <select id="arMatch"><option value="contains">تحتوي على</option><option value="exact">مطابقة تامة</option><option value="startswith">تبدأ بـ</option></select>
+    </div>
+    <div class="form-group"><label>الرد</label><textarea id="arResponse" placeholder="الرد الذي سيرسله البوت…"></textarea></div>
+    <div class="row2">
+      <div class="form-group"><label>نوع الرد</label>
+        <select id="arReplyType"><option value="send">💬 رسالة عادية</option><option value="reply">↩️ رد على رسالة العضو</option></select>
+      </div>
+      <div class="form-group"><label>منشن العضو</label>
+        <select id="arMention"><option value="false">بدون منشن</option><option value="true">📢 مع منشن العضو</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('arModal')">إلغاء</button>
+      <button class="btn btn-primary" id="arSaveBtn" onclick="saveAR()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMBED MODAL -->
+<div class="modal-overlay" id="embedModal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header"><div class="modal-title">🎨 إنشاء إيمبد</div><button class="modal-close" onclick="closeModal('embedModal')">✕</button></div>
+    <div class="row2">
+      <div class="form-group"><label>اسم الإيمبد</label><input type="text" id="emName" placeholder="مثال: welcome" oninput="updateEmbedPreview()"/></div>
+      <div class="form-group"><label>لون الشريط الجانبي</label><input type="color" id="emColor" value="#ff7814" oninput="updateEmbedPreview()"/></div>
+    </div>
+    <div class="form-group"><label>العنوان</label><input type="text" id="emTitle" placeholder="عنوان الإيمبد" oninput="updateEmbedPreview()"/></div>
+    <div class="form-group"><label>الوصف</label><textarea id="emDesc" placeholder="محتوى الإيمبد…" oninput="updateEmbedPreview()"></textarea></div>
+    <div class="row2">
+      <div class="form-group"><label>رابط الصورة الكبيرة</label><input type="url" id="emImage" placeholder="https://…" oninput="updateEmbedPreview()"/></div>
+      <div class="form-group"><label>رابط الصورة المصغرة</label><input type="url" id="emThumb" placeholder="https://…" oninput="updateEmbedPreview()"/></div>
+    </div>
+    <div class="form-group"><label>التذييل (Footer)</label><input type="text" id="emFooter" placeholder="نص في الأسفل" oninput="updateEmbedPreview()"/></div>
+    <div class="card-title" style="margin-bottom:4px;font-size:13px">معاينة الإيمبد</div>
+    <div class="embed-preview" id="embedPreview"><div style="color:var(--muted);font-size:12px">سيظهر الإيمبد هنا…</div></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('embedModal')">إلغاء</button>
+      <button class="btn btn-primary" onclick="saveEmbed()">💾 حفظ الإيمبد</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEND TO CHANNEL MODAL -->
+<div class="modal-overlay" id="sendChannelModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header"><div class="modal-title">📤 إرسال إيمبد إلى روم</div><button class="modal-close" onclick="closeModal('sendChannelModal')">✕</button></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">اختر الروم الذي تريد إرسال <strong id="sendEmbedLabel" style="color:var(--fire1)">الإيمبد</strong> فيه:</p>
+    <div class="channel-list" id="channelList"><div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">جاري التحميل…</div></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('sendChannelModal')">إلغاء</button>
+      <button class="btn btn-primary" id="confirmSendBtn" onclick="confirmSendEmbed()" disabled>📤 إرسال</button>
+    </div>
+  </div>
+</div>
+
+<!-- REACTION ROLES MODAL -->
+<div class="modal-overlay" id="rrModal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title">🎭 إعداد رتب قابلة للأخذ</div>
+      <button class="modal-close" onclick="closeModal('rrModal')">✕</button>
+    </div>
+
+    <!-- خطوات -->
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:22px" id="rrStepBar">
+      <div class="rr-step active" id="rrStepEl1"><div class="rr-step-num">1</div><div class="rr-step-lbl">الرسالة</div></div>
+      <div class="rr-step-line"></div>
+      <div class="rr-step" id="rrStepEl2"><div class="rr-step-num">2</div><div class="rr-step-lbl">الرتب</div></div>
+      <div class="rr-step-line"></div>
+      <div class="rr-step" id="rrStepEl3"><div class="rr-step-num">3</div><div class="rr-step-lbl">تأكيد</div></div>
+    </div>
+
+    <!-- الخطوة 1: اختيار الرسالة -->
+    <div id="rrPage1">
+      <!-- الطريقة: اختر إيمبداً تم إنشاؤه + رومة الإرسال -->
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7">
+        <div style="font-weight:700;margin-bottom:4px">⚡ كيف يعمل</div>
+        <div style="color:var(--muted)">1. أنشئ إيمبداً من صفحة <strong style="color:var(--fire1)">الإيمبدات</strong><br>2. اختره هنا وحدد الرومة<br>3. أضف الرتب والأزرار<br>4. البوت يُرسل الإيمبد مع الأزرار تلقائياً ✅</div>
+      </div>
+      <div class="form-group">
+        <label>اختر الإيمبد</label>
+        <select id="rrEmbedSelect" onchange="previewRREmbedSelect()">
+          <option value="">— اختر إيمبداً —</option>
+        </select>
+      </div>
+      <div id="rrEmbedPreviewBox" style="display:none;margin-bottom:12px"></div>
+      <div class="form-group">
+        <label>اختر الرومة للإرسال</label>
+        <select id="rrChannel" onchange="checkRRStep1Ready()">
+          <option value="">— اختر رومة —</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('rrModal')">إلغاء</button>
+        <button class="btn btn-primary" id="rrNextBtn1" onclick="rrNextFromStep1()" disabled>التالي ←</button>
+      </div>
+    </div>
+
+    <!-- الخطوة 2: إعداد الرتب -->
+    <div id="rrPage2" style="display:none">
+      <div class="row2" style="margin-bottom:4px">
+        <div class="form-group">
+          <label>نوع الأزرار</label>
+          <select id="rrStyle">
+            <option value="button">🔘 أزرار</option>
+            <option value="select">📋 قائمة منسدلة</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>العملية الافتراضية</label>
+          <select id="rrAction">
+            <option value="toggle">🔄 تبديل (أعطِ / اسحب)</option>
+            <option value="give">✅ إعطاء فقط</option>
+            <option value="remove">❌ سحب فقط</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <label style="margin:0;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase">الرتب</label>
+        <button class="btn btn-primary btn-sm" onclick="addRROption()">+ إضافة رتبة</button>
+      </div>
+      <div id="rrOptions" style="max-height:300px;overflow-y:auto"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="rrGoStep(1)">← رجوع</button>
+        <button class="btn btn-primary" onclick="rrGoStep(3)">التالي ←</button>
+      </div>
+    </div>
+
+    <!-- الخطوة 3: تأكيد -->
+    <div id="rrPage3" style="display:none">
+      <div id="rrConfirmBox" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="rrGoStep(2)">← رجوع</button>
+        <button class="btn btn-primary" onclick="saveRR()">✅ حفظ وإضافة الأزرار</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const SUPABASE_URL  = 'https://fmavtizsmttfvurqfydv.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_FFVV0x1bDPM7dCP6Ef1xCw_czL6clQq';
+const DISCORD_CLIENT_ID    = '148314709019118809';
+const DISCORD_REDIRECT_URI = window.location.origin + window.location.pathname;
+
+// أضف Bot Token هنا لتفعيل إرسال مباشر للرومات وجلب الرتب تلقائياً
+const BOT_TOKEN = '';
+
+let currentUser = null, currentGuild = null, accessToken = null;
+let guildMemberNames = {};
+let guildMemberAvatars = {};
+
+
+let guildRoles = [], guildChannels = [];
+let sendEmbedTarget = null, selectedChannelId = null;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  const token = hash.get('access_token') || localStorage.getItem('discord_token');
+  if (token) {
+    accessToken = token; localStorage.setItem('discord_token', token);
+    history.replaceState(null,'',window.location.pathname);
+    await loadUser();
+  } else showLoginPage();
+});
+
+function loginWithDiscord() {
+  const p = new URLSearchParams({ client_id: DISCORD_CLIENT_ID, redirect_uri: DISCORD_REDIRECT_URI, response_type: 'token', scope: 'identify guilds' });
+  window.location.href = 'https://discord.com/oauth2/authorize?' + p;
+}
+async function loadUser() {
+  try {
+    const r = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!r.ok) throw 0;
+    currentUser = await r.json(); showDashboard(); loadGuilds();
+  } catch { localStorage.removeItem('discord_token'); showLoginPage(); }
+}
+async function loadGuilds() {
+  try {
+    const r = await fetch('https://discord.com/api/users/@me/guilds', { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!r.ok) { console.error('guilds fetch failed', r.status); return; }
+    const data = await r.json();
+    const guilds = Array.isArray(data) ? data : [];
+    renderGuildList(guilds);
+  } catch(e){ console.error('loadGuilds error:', e); }
+}
+function renderGuildList(guilds) {
+  const el = document.getElementById('guildList');
+  if (!guilds.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">😔</div><div class="empty-text">لا توجد سيرفرات تديرها</div></div>'; return; }
+  el.innerHTML = guilds.map(g => {
+    const icon = g.icon ? '<img src="https://cdn.discordapp.com/icons/'+g.id+'/'+g.icon+'.png" style="width:36px;height:36px;border-radius:10px">'
+      : '<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--fire3),var(--fire1));display:flex;align-items:center;justify-content:center;font-size:16px">🏠</div>';
+    return '<div class="list-item" onclick="selectGuild('+JSON.stringify(g).replace(/"/g,'&quot;')+')" style="cursor:pointer;margin-bottom:8px">'+icon+'<div class="list-item-info"><div class="list-item-title">'+g.name+'</div><div class="list-item-sub">'+g.id+'</div></div></div>';
+  }).join('');
+}
+async function selectGuild(guild) {
+  currentGuild = guild; guildRoles = []; guildChannels = [];
+  const iconUrl = guild.icon ? 'https://cdn.discordapp.com/icons/'+guild.id+'/'+guild.icon+'.png' : null;
+  const iconEl = document.getElementById('currentGuildIcon');
+  if (iconEl) { iconEl.innerHTML = iconUrl ? '<img src="'+iconUrl+'">' : '🏠'; }
+  document.getElementById('currentGuildName').textContent = guild.name;
+  closeModal('guildModal');
+  await fetchGuildData();
+  refreshCurrentPage();
+  toast('✅ تم اختيار ' + guild.name, 'success');
+}
+async function fetchGuildData() {
+  // نجلب الرتب والقنوات من Supabase — يخزّنها البوت تلقائياً
+  try {
+    const [rolesRes, chansRes, emojisRes] = await Promise.all([
+      sbGet('guild_roles',    {guild_id: currentGuild.id}),
+      sbGet('guild_channels', {guild_id: currentGuild.id}),
+      sbGet('guild_emojis',   {guild_id: currentGuild.id}),
+    ]);
+    guildRoles    = Array.isArray(rolesRes)  ? rolesRes.filter(r => r.name !== '@everyone') : [];
+    guildChannels = Array.isArray(chansRes)  ? chansRes  : [];
+    // store emojis on guildRoles object for access in emoji picker
+    guildRoles._emojis = Array.isArray(emojisRes) ? emojisRes.map(e => ({
+      val:   '<:'+e.name+':'+e.emoji_id+'>',
+      label: e.name,
+      url:   'https://cdn.discordapp.com/emojis/'+e.emoji_id+'.'+(e.animated?'gif':'webp')+'?size=32',
+    })) : [];
+    populateRoleDropdowns();
+    populateChannelDropdowns();
+    fetchMemberNames();
+  } catch(e) { console.error('fetchGuildData', e); }
+}
+
+async function fetchMemberNames() {
+  if (!currentGuild) return;
+
+  // 1. جلب من Supabase (يحدّثه البوت)
+  try {
+    const res  = await fetch(SUPABASE_URL+'/rest/v1/guild_members?guild_id=eq.'+encodeURIComponent(currentGuild.id)+'&select=user_id,username,avatar_url', {headers:sbHeaders()});
+    const data = await res.json();
+    if (Array.isArray(data) && data.length) {
+      data.forEach(m => {
+        if (m.username)   guildMemberNames[m.user_id]   = m.username;
+        if (m.avatar_url) guildMemberAvatars[m.user_id] = m.avatar_url;
+      });
+      return; // عندنا بيانات كافية
+    }
+  } catch(e) { console.error('fetchMemberNames supabase', e); }
+
+  // 2. Fallback: جلب أعضاء السيرفر من Discord API مباشرة
+  try {
+    const res = await fetch(
+      'https://discord.com/api/guilds/'+currentGuild.id+'/members?limit=1000',
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (res.ok) {
+      const members = await res.json();
+      if (Array.isArray(members)) {
+        members.forEach(m => {
+          if (!m.user) return;
+          const uid  = m.user.id;
+          const name = m.nick || m.user.global_name || m.user.username;
+          const av   = m.user.avatar
+            ? 'https://cdn.discordapp.com/avatars/'+uid+'/'+m.user.avatar+'.png?size=64'
+            : 'https://cdn.discordapp.com/embed/avatars/'+(parseInt(uid)%5)+'.png';
+          guildMemberNames[uid]   = name;
+          guildMemberAvatars[uid] = av;
+        });
+      }
+    }
+  } catch(e) { console.error('fetchMemberNames discord', e); }
+}
+function showLoginPage() { document.getElementById('loginPage').style.display='flex'; document.getElementById('dashboard').style.display='none'; }
+function showDashboard() {
+  document.getElementById('loginPage').style.display='none'; document.getElementById('dashboard').style.display='flex';
+  const u = currentUser;
+  const av = u.avatar ? 'https://cdn.discordapp.com/avatars/'+u.id+'/'+u.avatar+'.png?size=64' : null;
+  document.getElementById('sidebarAvatar').innerHTML = av ? '<img src="'+av+'">' : '👤';
+  document.getElementById('sidebarName').textContent = u.global_name || u.username;
+  document.getElementById('sidebarTag').textContent = u.discriminator && u.discriminator !== '0' ? '#'+u.discriminator : '@'+u.username;
+}
+function logout() { localStorage.removeItem('discord_token'); accessToken=null; currentUser=null; currentGuild=null; showLoginPage(); }
+const pageTitles = {
+  overview:['نظرة عامة','إحصائيات وبيانات السيرفر'],leaderboard:['لوحة المتصدرين','ترتيب الأعضاء حسب XP'],
+  aliases:['اختصارات الأوامر','روابط الأوامر (بدون بادئة)'],permissions:['صلاحيات الأوامر','التحكم في من يستخدم كل أمر'],
+  autoresponse:['ردود تلقائية','ردود البوت على رسائل معينة'],embeds:['إيمبدات','إيمبدات جاهزة للإرسال'],
+  reactionroles:['رتب قابلة للأخذ','رسائل تفاعلية لاختيار الرتب'],
+};
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (window.innerWidth <= 768) document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  if (window.innerWidth <= 768) document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  // Close mobile menu on navigation
+  if (window.innerWidth <= 768) document.querySelector('.sidebar')?.classList.remove('mobile-open');
+  document.getElementById('page-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const [t,s] = pageTitles[id]||['—','—'];
+  document.getElementById('pageTitle').textContent = t;
+  document.getElementById('pageSubtitle').textContent = s;
+  refreshCurrentPage();
+}
+function refreshCurrentPage() {
+  const a = document.querySelector('.page.active');
+  if (!a || !currentGuild) return;
+  const id = a.id.replace('page-','');
+  if (id==='overview') loadOverview();
+  if (id==='leaderboard') loadLeaderboard();
+  if (id==='aliases') loadAliases();
+  if (id==='permissions') loadPerms();
+  if (id==='autoresponse') loadAR();
+  if (id==='embeds') loadEmbeds();
+  if (id==='reactionroles') loadRR();
+}
+function openModal(id) { document.getElementById(id).classList.add('open') }
+function closeModal(id) { document.getElementById(id).classList.remove('open') }
+function openGuildModal() { loadGuilds(); openModal('guildModal') }
+document.querySelectorAll('.modal-overlay').forEach(o => { o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }) });
+function toggleMobileMenu() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('mobile-open');
+}
+// Close sidebar when clicking outside on mobile
+document.addEventListener('click', e => {
+  const sidebar = document.querySelector('.sidebar');
+  if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
+    if (!sidebar.contains(e.target) && !document.getElementById('menuToggle').contains(e.target)) {
+      sidebar.classList.remove('mobile-open');
+    }
+  }
+});
+// Show/hide menu toggle button
+function checkMobile() {
+  const btn = document.getElementById('menuToggle');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+}
+window.addEventListener('resize', checkMobile);
+window.addEventListener('DOMContentLoaded', checkMobile);
+
+function toggleMobileMenu() {
+  document.querySelector('.sidebar').classList.toggle('mobile-open');
+}
+document.addEventListener('click', e => {
+  if (window.innerWidth > 768) return;
+  const sb = document.querySelector('.sidebar');
+  const btn = document.getElementById('menuToggle');
+  if (sb && btn && !sb.contains(e.target) && !btn.contains(e.target))
+    sb.classList.remove('mobile-open');
+});
+function checkMobile() {
+  const btn = document.getElementById('menuToggle');
+  if (btn) btn.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+}
+window.addEventListener('resize', checkMobile);
+setTimeout(checkMobile, 100);
+
+
+function toast(msg, type='success') {
+  const c = document.getElementById('toastContainer'), t = document.createElement('div');
+  t.className = 'toast '+type; t.textContent = msg; c.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+function sbHeaders() { return { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer '+SUPABASE_ANON, 'Content-Type': 'application/json' }; }
+async function sbGet(table, filters={}, order='id.asc') {
+  let url = SUPABASE_URL+'/rest/v1/'+table+'?select=*';
+  for (const [k,v] of Object.entries(filters)) url += '&'+k+'=eq.'+encodeURIComponent(v);
+  url += '&order='+order;
+  return (await fetch(url, { headers: sbHeaders() })).json();
+}
+async function sbPost(table, body) {
+  const r = await fetch(SUPABASE_URL+'/rest/v1/'+table, { method:'POST', headers:{...sbHeaders(),'Prefer':'return=representation'}, body:JSON.stringify(body) });
+  return r.json();
+}
+async function sbDelete(table, id) { await fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id, { method:'DELETE', headers:sbHeaders() }); }
+async function sbPatch(table, id, body) { await fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id, { method:'PATCH', headers:{...sbHeaders(),'Prefer':'return=minimal'}, body:JSON.stringify(body) }); }
+async function ensureGuild() {
+  if (!currentGuild) return;
+  await fetch(SUPABASE_URL+'/rest/v1/guild_settings', { method:'POST', headers:{...sbHeaders(),'Prefer':'resolution=ignore-duplicates'}, body:JSON.stringify({guild_id:currentGuild.id}) });
+}
+
+// OVERVIEW
+async function loadOverview() {
+  if (!currentGuild) return;
+  try {
+    const url = SUPABASE_URL+'/rest/v1/members?guild_id=eq.'+encodeURIComponent(currentGuild.id)+'&select=*&order=xp.desc';
+    const res  = await fetch(url, {headers: sbHeaders()});
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) {
+      document.getElementById('topPreview').innerHTML = '<div class="empty"><div class="empty-icon">💬</div><div class="empty-text">لا توجد بيانات — تكلم في السيرفر أولاً</div></div>';
+      ['statMembers','statMessages','statMaxLevel','statTotalXp'].forEach(id => document.getElementById(id).textContent = '0');
+      return;
+    }
+    document.getElementById('statMembers').textContent  = rows.length.toLocaleString();
+    document.getElementById('statMessages').textContent = fmt(rows.reduce((s,r)=>s+(r.messages||0),0));
+    document.getElementById('statMaxLevel').textContent = rows.reduce((m,r)=>Math.max(m,r.level||0),0);
+    document.getElementById('statTotalXp').textContent  = fmt(rows.reduce((s,r)=>s+(r.xp||0),0));
+    const top5 = rows.slice(0,5);
+    const mx   = top5[0]?.xp || 1;
+    document.getElementById('topPreview').innerHTML = top5.map((r,i) => {
+      const name   = guildMemberNames[r.user_id]  || ('ID: '+r.user_id.slice(-6));
+      const avUrl  = guildMemberAvatars[r.user_id];
+      const avatar = avUrl
+        ? '<img src="'+avUrl+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">'
+        : '<div style="width:32px;height:32px;border-radius:50%;background:var(--discord);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">👤</div>';
+      return '<div class="list-item">'+
+        '<div class="rank-badge '+(['gold','silver','bronze'][i]||'')+'">'+(i+1)+'</div>'+
+        avatar+
+        '<div class="list-item-info" style="flex:1">'+
+          '<div class="list-item-title" style="font-size:13px;font-weight:600">'+name+'</div>'+
+          '<div class="xp-bar-wrap" style="margin-top:4px">'+
+            '<div class="xp-bar"><div class="xp-fill" style="width:'+(r.xp/mx*100).toFixed(1)+'%"></div></div>'+
+            '<div class="xp-label">'+fmt(r.xp)+' XP</div>'+
+          '</div>'+
+        '</div>'+
+        '<span class="chip chip-fire">Lv'+r.level+'</span>'+
+      '</div>';
+    }).join('');
+  } catch(e) { console.error('loadOverview:', e); }
+}
+
+// LEADERBOARD
+async function loadLeaderboard() {
+  if (!currentGuild) return;
+  document.getElementById('leaderboardBody').innerHTML = '<tr><td colspan="5"><div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">جاري التحميل…</div></div></td></tr>';
+  try {
+    // جلب البيانات مع فرز من Supabase مباشرة
+    const url = SUPABASE_URL+'/rest/v1/members?guild_id=eq.'+encodeURIComponent(currentGuild.id)+'&select=*&order=xp.desc&limit=50';
+    const res = await fetch(url, {headers: sbHeaders()});
+    const rows = await res.json();
+    if (!Array.isArray(rows) || !rows.length) {
+      document.getElementById('leaderboardBody').innerHTML = '<tr><td colspan="5"><div class="empty"><div class="empty-icon">📭</div><div class="empty-text">لا توجد بيانات — تأكد أن الأعضاء تكلموا في السيرفر</div></div></td></tr>';
+      return;
+    }
+    const mx = rows[0]?.xp || 1;
+    document.getElementById('leaderboardBody').innerHTML = rows.map((r,i) => {
+      const uname = guildMemberNames[r.user_id] || ('ID: '+r.user_id.slice(-6));
+      return '<tr>'+
+        '<td><span class="rank-badge '+(['gold','silver','bronze'][i]||'')+'">'+(i+1)+'</span></td>'+
+        '<td><div class="user-cell">'+
+          (guildMemberAvatars[r.user_id]
+            ? '<img src="'+guildMemberAvatars[r.user_id]+'" style="width:30px;height:30px;border-radius:50%;object-fit:cover">'
+            : '<div class="av">👤</div>')+
+          '<span style="font-size:13px">'+uname+'</span>'+
+        '</div></td>'+
+        '<td><span class="chip chip-fire">Lv '+r.level+'</span></td>'+
+        '<td><div class="xp-bar-wrap"><div class="xp-bar" style="max-width:120px"><div class="xp-fill" style="width:'+(r.xp/mx*100).toFixed(1)+'%"></div></div><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">'+fmt(r.xp)+'</span></div></td>'+
+        '<td style="font-family:var(--mono);font-size:12px;color:var(--muted)">'+fmt(r.messages||0)+'</td>'+
+      '</tr>';
+    }).join('');
+  } catch(e) {
+    console.error('loadLeaderboard:', e);
+    document.getElementById('leaderboardBody').innerHTML = '<tr><td colspan="5"><div class="empty"><div class="empty-icon">❌</div><div class="empty-text">خطأ في جلب البيانات</div></div></td></tr>';
+  }
+}
+
+// ALIASES
+async function loadAliases() {
+  if (!currentGuild) return;
+  const rows = await sbGet('command_aliases', {guild_id:currentGuild.id});
+  if (!Array.isArray(rows)||!rows.length) { document.getElementById('aliasesList').innerHTML='<div class="empty"><div class="empty-icon">⚡</div><div class="empty-text">لا توجد اختصارات بعد</div></div>'; return; }
+  document.getElementById('aliasesList').innerHTML = rows.map(r => '<div class="alias-row"><span class="alias-key">'+r.alias+'</span><span class="alias-arrow">→</span><span class="alias-target">/'+r.target_command+'</span><div style="margin-right:auto"><button class="btn btn-danger btn-sm" onclick="deleteAlias('+r.id+')">🗑 حذف</button></div></div>').join('');
+}
+async function saveAlias() {
+  if (!currentGuild) return toast('اختر سيرفراً أولاً','error');
+  const alias = document.getElementById('aliasKey').value.trim().replace(/^\//,'');
+  const target = document.getElementById('aliasTarget').value;
+  if (!alias) return toast('أدخل الاختصار','error');
+  await ensureGuild();
+  await sbPost('command_aliases', {guild_id:currentGuild.id, alias, target_command:target});
+  closeModal('aliasModal'); document.getElementById('aliasKey').value='';
+  toast('✅ تم حفظ الاختصار','success'); loadAliases();
+}
+async function deleteAlias(id) { await sbDelete('command_aliases',id); toast('🗑 تم الحذف','success'); loadAliases(); }
+
+// ── PERMISSIONS ─────────────────────────────────────────────────────────────
+const ALL_COMMANDS = [
+  {id:'rank',      icon:'🏅', label:'rank',       desc:'بطاقة الرانك'},
+  {id:'user',      icon:'👤', label:'user',       desc:'معلومات عضو'},
+  {id:'server',    icon:'🖥️', label:'server',     desc:'معلومات السيرفر'},
+  {id:'avatar',    icon:'🖼️', label:'avatar',     desc:'صورة عضو'},
+  {id:'top',       icon:'🏆', label:'top',        desc:'لوحة المتصدرين'},
+  {id:'send-embed',icon:'📤', label:'send-embed', desc:'إرسال إيمبد'},
+];
+let permState = {};
+let editingPermCmd = null;
+let selectedPermRoles = new Set();
+
+async function loadPerms() {
+  if (!currentGuild) return;
+  const el = document.getElementById('permCards');
+  if (el) el.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⏳</div><div class="empty-text">جاري التحميل…</div></div>';
+  const rows  = await sbGet('command_permissions', {guild_id:currentGuild.id});
+  const rules = Array.isArray(rows) ? rows : [];
+  permState = {};
+  ALL_COMMANDS.forEach(cmd => {
+    const cmdRules = rules.filter(r => r.command_name === cmd.id);
+    if (!cmdRules.length) {
+      permState[cmd.id] = {enabled:true, type:'public', roles:[]};
+    } else {
+      const disabled = cmdRules.find(r => !r.allowed && r.role_id === '__disabled__');
+      permState[cmd.id] = disabled
+        ? {enabled:false, type:'public', roles:[]}
+        : {enabled:true, type:'custom', roles:cmdRules.filter(r=>r.allowed).map(r=>r.role_id)};
+    }
+  });
+  renderPermCards();
+}
+
+function renderPermCards() {
+  const el = document.getElementById('permCards');
+  if (!el) return;
+  el.innerHTML = ALL_COMMANDS.map(cmd => {
+    const st       = permState[cmd.id] || {enabled:true, type:'public', roles:[]};
+    const roleObjs = st.roles.map(rid => guildRoles.find(r=>(r.role_id||r.id)===rid) || {name:rid, color:'#8888aa'});
+    const statusChip = !st.enabled
+      ? '<span class="chip chip-red" style="font-size:11px">⛔ معطّل</span>'
+      : st.type==='public'
+        ? '<span class="chip chip-green" style="font-size:11px">🌍 عام</span>'
+        : '<span class="chip chip-blue" style="font-size:11px">🎯 مخصص ('+st.roles.length+' رتبة)</span>';
+    const rolesRow = st.type==='custom' && roleObjs.length
+      ? '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px">'
+        + roleObjs.map(r => {
+            const c = r.color && r.color!='Color.default' ? r.color : '#8888aa';
+            return '<span style="padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;background:'+c+'22;border:1px solid '+c+'44;color:'+c+'">@'+r.name+'</span>';
+          }).join('')
+        + '</div>'
+      : '';
+    return '<div class="perm-card" id="pc-'+cmd.id+'" style="opacity:'+(st.enabled?1:.55)+'">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<span style="font-size:20px">'+cmd.icon+'</span>'+
+          '<div><div style="font-size:14px;font-weight:700;font-family:var(--mono)">/'+cmd.label+'</div>'+
+               '<div style="font-size:11px;color:var(--muted)">'+cmd.desc+'</div></div>'+
+        '</div>'+
+        '<label class="toggle"><input type="checkbox" '+(st.enabled?'checked':'')+
+          ' onchange="togglePermCmd(\''+cmd.id+'\',this.checked)"><span class="toggle-slider"></span></label>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid var(--border)">'+
+        statusChip+
+        '<button class="btn btn-secondary btn-xs" onclick="openPermEdit(\''+cmd.id+'\')">⚙️ تعديل</button>'+
+      '</div>'+
+      rolesRow+
+    '</div>';
+  }).join('');
+}
+
+async function togglePermCmd(cmdId, enabled) {
+  if (!currentGuild) return;
+  permState[cmdId] = {...(permState[cmdId]||{}), enabled};
+  const rows = await sbGet('command_permissions', {guild_id:currentGuild.id});
+  if (Array.isArray(rows)) for (const r of rows.filter(r=>r.command_name===cmdId)) await sbDelete('command_permissions',r.id);
+  if (!enabled) { await ensureGuild(); await sbPost('command_permissions',{guild_id:currentGuild.id,command_name:cmdId,role_id:'__disabled__',allowed:false}); }
+  renderPermCards();
+  toast((enabled?'✅ تم تفعيل /':'⛔ تم تعطيل /')+cmdId, 'success');
+}
+
+function openPermEdit(cmdId) {
+  editingPermCmd = cmdId;
+  const cmd = ALL_COMMANDS.find(c=>c.id===cmdId);
+  const st  = permState[cmdId] || {enabled:true, type:'public', roles:[]};
+  selectedPermRoles = new Set(st.roles);
+  document.getElementById('permModalTitle').textContent = '⚙️ إعداد /'+cmd.label;
+  document.getElementById('permModalCmd').textContent   = cmd.desc;
+  setPermType(st.type||'public', false);
+  renderPermRolesList();
+  openModal('permModal');
+}
+
+function setPermType(type, updateState=true) {
+  const isCustom = type==='custom';
+  document.getElementById('permTypePublic').style.border      = !isCustom ? '2px solid var(--fire1)' : '1px solid var(--border)';
+  document.getElementById('permTypePublic').style.background  = !isCustom ? '#ff781410' : '';
+  document.getElementById('permTypeCustom').style.border      =  isCustom ? '2px solid var(--fire1)' : '1px solid var(--border)';
+  document.getElementById('permTypeCustom').style.background  =  isCustom ? '#ff781410' : '';
+  document.getElementById('permRolesSection').style.display   =  isCustom ? 'block' : 'none';
+  if (updateState && editingPermCmd) permState[editingPermCmd] = {...(permState[editingPermCmd]||{}), type};
+}
+
+function renderPermRolesList() {
+  const el = document.getElementById('permRolesList');
+  if (!guildRoles.length) { el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:8px">⚠️ لا توجد رتب — أعد تشغيل البوت ثم أعد اختيار السيرفر</div>'; return; }
+  el.innerHTML = guildRoles.map(r => {
+    const rid      = r.role_id || r.id;
+    const selected = selectedPermRoles.has(rid);
+    const color    = r.color && r.color!='Color.default' ? r.color : '#8888aa';
+    return '<div onclick="togglePermRole(\''+rid+'\')" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;transition:all .15s;margin-bottom:4px;background:'+(selected?color+'18':'var(--bg3)')+';border:1px solid '+(selected?color+'50':'var(--border)')+'">'+
+      '<div style="width:14px;height:14px;border-radius:50%;background:'+color+';flex-shrink:0"></div>'+
+      '<span style="flex:1;font-size:13px;color:var(--text)">'+r.name+'</span>'+
+      (selected?'<span style="color:var(--green);font-weight:700">✓</span>':'')+
+    '</div>';
+  }).join('');
+}
+
+function togglePermRole(rid) {
+  if (selectedPermRoles.has(rid)) selectedPermRoles.delete(rid);
+  else selectedPermRoles.add(rid);
+  renderPermRolesList();
+}
+
+async function savePermNew() {
+  if (!currentGuild || !editingPermCmd) return toast('خطأ','error');
+  const isCustom = document.getElementById('permTypeCustom').style.border.includes('fire1');
+  await ensureGuild();
+  const rows = await sbGet('command_permissions', {guild_id:currentGuild.id});
+  if (Array.isArray(rows)) for (const r of rows.filter(r=>r.command_name===editingPermCmd)) await sbDelete('command_permissions',r.id);
+  if (isCustom) {
+    for (const rid of selectedPermRoles) await sbPost('command_permissions',{guild_id:currentGuild.id,command_name:editingPermCmd,role_id:rid,allowed:true});
+  }
+  permState[editingPermCmd] = {...(permState[editingPermCmd]||{}), type:isCustom?'custom':'public', roles:[...selectedPermRoles]};
+  closeModal('permModal');
+  renderPermCards();
+  toast('✅ تم حفظ إعدادات /'+editingPermCmd, 'success');
+}
+
+async function deletePerm(id) { await sbDelete('command_permissions',id); loadPerms(); }
+
+// AUTO RESPONSE
+async function loadAR() {
+  if (!currentGuild) return;
+  const rows = await sbGet('auto_responses', {guild_id:currentGuild.id});
+  if (!Array.isArray(rows)||!rows.length) { document.getElementById('arList').innerHTML='<div class="empty"><div class="empty-icon">🤖</div><div class="empty-text">لا توجد ردود تلقائية بعد</div></div>'; return; }
+  const ml = {contains:'تحتوي على',exact:'مطابقة تامة',startswith:'تبدأ بـ'};
+  document.getElementById('arList').innerHTML = rows.map(r => {
+    const rt = r.reply_type==='reply'?'↩️ رد على الرسالة':'💬 رسالة عادية';
+    const mn = r.mention_user?'<span class="chip chip-green" style="font-size:11px">📢 مع منشن</span>':'';
+    return '<div class="list-item"><div class="list-item-info"><div class="list-item-title">🔍 "'+r.trigger+'" <span class="chip chip-blue" style="font-size:11px">'+(ml[r.match_type]||r.match_type)+'</span> <span class="chip chip-gold" style="font-size:11px">'+rt+'</span> '+mn+'</div><div class="list-item-sub" style="margin-top:4px">↩ '+r.response.substring(0,80)+(r.response.length>80?'…':'')+'</div></div><div class="list-item-actions"><label class="toggle"><input type="checkbox" '+(r.enabled?'checked':'')+' onchange="toggleAR('+r.id+',this.checked)"><span class="toggle-slider"></span></label><button class="btn btn-secondary btn-sm" onclick="editAR('+r.id+')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteAR('+r.id+')">🗑</button></div></div>';
+  }).join('');
+}
+let editingARId = null;
+function openAddAR() {
+  editingARId = null;
+  document.getElementById('arModalTitle').textContent = '🤖 إضافة رد تلقائي';
+  document.getElementById('arSaveBtn').textContent = '💾 حفظ';
+  document.getElementById('arTrigger').value='';
+  document.getElementById('arResponse').value='';
+  document.getElementById('arMatch').value='contains';
+  document.getElementById('arReplyType').value='send';
+  document.getElementById('arMention').value='false';
+  openModal('arModal');
+}
+async function editAR(id) {
+  const rows = await sbGet('auto_responses', {guild_id:currentGuild.id});
+  const r = Array.isArray(rows) ? rows.find(x=>x.id===id) : null;
+  if (!r) return toast('لم يتم العثور على الرد','error');
+  editingARId = id;
+  document.getElementById('arModalTitle').textContent = '✏️ تعديل رد تلقائي';
+  document.getElementById('arSaveBtn').textContent = '💾 تحديث';
+  document.getElementById('arTrigger').value   = r.trigger || '';
+  document.getElementById('arResponse').value  = r.response || '';
+  document.getElementById('arMatch').value      = r.match_type || 'contains';
+  document.getElementById('arReplyType').value  = r.reply_type || 'send';
+  document.getElementById('arMention').value    = r.mention_user ? 'true' : 'false';
+  openModal('arModal');
+}
+async function saveAR() {
+  if (!currentGuild) return toast('اختر سيرفراً أولاً','error');
+  const trigger    = document.getElementById('arTrigger').value.trim();
+  const match_type = document.getElementById('arMatch').value;
+  const response   = document.getElementById('arResponse').value.trim();
+  const reply_type = document.getElementById('arReplyType').value;
+  const mention_user = document.getElementById('arMention').value === 'true';
+  if (!trigger||!response) return toast('أدخل الكلمة والرد','error');
+  await ensureGuild();
+  if (editingARId) {
+    await sbPatch('auto_responses', editingARId, {trigger, match_type, response, reply_type, mention_user});
+    toast('✅ تم التحديث','success');
+  } else {
+    await sbPost('auto_responses', {guild_id:currentGuild.id, trigger, match_type, response, reply_type, mention_user, enabled:true});
+    toast('✅ تم الحفظ','success');
+  }
+  editingARId = null;
+  closeModal('arModal');
+  document.getElementById('arTrigger').value=''; document.getElementById('arResponse').value='';
+  loadAR();
+}
+async function toggleAR(id, enabled) { await sbPatch('auto_responses',id,{enabled}); toast(enabled?'✅ تم التفعيل':'⛔ تم التعطيل','success'); }
+async function deleteAR(id) { await sbDelete('auto_responses',id); toast('🗑 تم الحذف','success'); loadAR(); }
+
+// EMBEDS
+function openEmbedModal() {
+  ['emName','emTitle','emDesc','emFooter','emImage','emThumb'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('emColor').value='#ff7814'; updateEmbedPreview(); openModal('embedModal');
+}
+async function loadEmbeds() {
+  if (!currentGuild) return;
+  const rows = await sbGet('embeds', {guild_id:currentGuild.id});
+  if (!Array.isArray(rows)||!rows.length) { document.getElementById('embedsList').innerHTML='<div class="empty"><div class="empty-icon">🎨</div><div class="empty-text">لا توجد إيمبدات بعد</div></div>'; return; }
+  document.getElementById('embedsList').innerHTML = rows.map(r => '<div class="list-item"><div style="width:6px;height:44px;border-radius:99px;background:'+(r.color||'#5865F2')+';min-width:6px"></div><div class="list-item-info"><div class="list-item-title">📋 '+r.name+'</div><div class="list-item-sub">'+(r.title||'(بدون عنوان)')+' — '+(r.description||'').substring(0,60)+((r.description||'').length>60?'…':'')+'</div></div><div class="list-item-actions"><span class="chip chip-blue" style="font-size:11px;font-family:var(--mono)">/send-embed '+r.name+'</span><button class="btn btn-success btn-sm" onclick="openSendChannelModal('+r.id+',\''+r.name.replace(/'/g,"\\'")+ '\')">📤 إرسال</button><button class="btn btn-danger btn-sm" onclick="deleteEmbed('+r.id+')">🗑</button></div></div>').join('');
+}
+function updateEmbedPreview() {
+  const t=document.getElementById('emTitle').value, d=document.getElementById('emDesc').value, c=document.getElementById('emColor').value;
+  const f=document.getElementById('emFooter').value, i=document.getElementById('emImage').value, th=document.getElementById('emThumb').value;
+  const el=document.getElementById('embedPreview'); el.style.borderRightColor=c;
+  el.innerHTML=(th?'<img src="'+th+'" class="embed-thumb-p" onerror="this.remove()">'+'':'')+(t?'<div class="embed-title">'+t+'</div>':'')+(d?'<div class="embed-desc">'+d+'</div>':'')+(i?'<img src="'+i+'" class="embed-image-p" onerror="this.remove()">':'')+(f?'<div class="embed-footer-p">'+f+'</div>':'')+(!t&&!d?'<div style="color:var(--muted);font-size:12px">سيظهر الإيمبد هنا…</div>':'');
+}
+async function saveEmbed() {
+  if (!currentGuild) return toast('اختر سيرفراً أولاً','error');
+  const name=document.getElementById('emName').value.trim(), title=document.getElementById('emTitle').value.trim();
+  const desc=document.getElementById('emDesc').value.trim(), color=document.getElementById('emColor').value;
+  const foot=document.getElementById('emFooter').value.trim(), img=document.getElementById('emImage').value.trim(), thumb=document.getElementById('emThumb').value.trim();
+  if (!name) return toast('أدخل اسم الإيمبد','error');
+  await ensureGuild();
+  await sbPost('embeds', {guild_id:currentGuild.id, name, title, description:desc, color, footer:foot, image_url:img, thumbnail_url:thumb, fields:[]});
+  closeModal('embedModal'); toast('✅ تم حفظ الإيمبد','success'); loadEmbeds();
+}
+async function deleteEmbed(id) { await sbDelete('embeds',id); toast('🗑 تم الحذف','success'); loadEmbeds(); }
+
+// SEND TO CHANNEL
+async function openSendChannelModal(embedId, embedName) {
+  sendEmbedTarget = {id:embedId, name:embedName};
+  document.getElementById('sendEmbedLabel').textContent = embedName;
+  document.getElementById('confirmSendBtn').disabled = true;
+  selectedChannelId = null;
+  const cl = document.getElementById('channelList');
+  cl.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><div class="empty-text">جاري التحميل…</div></div>';
+  openModal('sendChannelModal');
+  if (guildChannels.length > 0) { renderChannelList(guildChannels); return; }
+  // إعادة المحاولة من Supabase
+  try {
+    const res = await sbGet('guild_channels', {guild_id: currentGuild.id});
+    guildChannels = Array.isArray(res) ? res : [];
+    renderChannelList(guildChannels);
+  } catch { cl.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div class="empty-text">فشل جلب القنوات</div></div>'; }
+}
+function renderChannelList(channels) {
+  const cl = document.getElementById('channelList');
+  if (!channels.length) { cl.innerHTML='<div class="empty"><div class="empty-icon">🔇</div><div class="empty-text">لا توجد رومات نصية</div></div>'; return; }
+  cl.innerHTML = channels.map(c => {
+    const cid = c.channel_id || c.id;
+    return '<div class="channel-item" onclick="selectChannel(\''+cid+'\',this)"><span class="channel-hash" style="color:var(--muted);font-size:14px">#</span><span style="flex:1;font-size:13px">'+c.name+'</span><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">'+cid+'</span></div>';
+  }).join('');
+}
+function selectChannel(id, el) {
+  document.querySelectorAll('.channel-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected'); selectedChannelId=id; document.getElementById('confirmSendBtn').disabled=false;
+}
+async function confirmSendEmbed() {
+  const channelId = selectedChannelId;
+  if (!channelId || !sendEmbedTarget) return toast('اختر روماً أولاً','error');
+  await ensureGuild();
+  await sbPost('send_queue', { guild_id:currentGuild.id, type:'embed', payload:JSON.stringify({embed_name:sendEmbedTarget.name, channel_id:channelId}), done:false });
+  toast('✅ سيُرسل البوت الإيمبد للرومة قريباً','success');
+  closeModal('sendChannelModal');
+  selectedChannelId=null; sendEmbedTarget=null;
+}
+
+// REACTION ROLES
+let rrSelectedMsgId = null, rrSelectedChannelId = null, rrSelectedMsgPreview = '';
+
+async function loadRR() {
+  if (!currentGuild) return;
+  const rows = await sbGet('reaction_roles', {guild_id:currentGuild.id});
+  if (!Array.isArray(rows)||!rows.length) {
+    document.getElementById('rrList').innerHTML='<div class="empty"><div class="empty-icon">🎭</div><div class="empty-text">لا توجد رسائل رتب بعد</div></div>';
+    return;
+  }
+  document.getElementById('rrList').innerHTML = rows.map(r => {
+    const opts = (r.options||[]).map(o=>'<div class="rr-option"><span class="rr-emoji">'+(o.emoji||'●')+'</span><span style="flex:1;font-weight:500">'+o.label+'</span><span class="chip chip-blue" style="font-size:11px">'+(guildRoles.find(gr=>gr.role_id===o.role_id||gr.id===o.role_id)?.name||o.role_id)+'</span></div>').join('');
+    const styleLabel = r.style==='button'?'🔘 أزرار':'📋 قائمة';
+    const actionLabel = r.action==='give'?'✅ إعطاء':r.action==='remove'?'❌ سحب':'🔄 تبديل';
+    const chName = guildChannels.find(c=>c.channel_id===r.channel_id)?.name || r.channel_id || '—';
+    return '<div class="rr-card"><div class="rr-card-header"><div>'+
+      '<div class="rr-title">🎭 رسالة رتب — #'+chName+'</div>'+
+      '<div class="rr-sub">'+styleLabel+' · '+actionLabel+'</div>'+
+      (r.msg_preview?'<div style="font-size:11px;color:var(--muted);margin-top:4px;font-style:italic">'+r.msg_preview.substring(0,80)+'</div>':'')+'</div>'+
+      '<button class="btn btn-danger btn-sm" onclick="deleteRR('+r.id+')">🗑 حذف</button>'+
+    '</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+opts+'</div></div>';
+  }).join('');
+}
+
+async function openRRModal() {
+  rrSelectedMsgId = null; rrSelectedChannelId = null; rrSelectedMsgPreview = '';
+  rrSelectedEmbedId = null; rrSelectedEmbedName = '';
+  document.getElementById('rrOptions').innerHTML = '';
+  rrGoStep(1);
+
+  // ملء قائمة الإيمبدات
+  const embeds = await sbGet('embeds', {guild_id: currentGuild.id});
+  const esel = document.getElementById('rrEmbedSelect');
+  esel.innerHTML = '<option value="">— اختر إيمبداً —</option>' +
+    (Array.isArray(embeds) ? embeds.map(e=>'<option value="'+e.id+'" data-name="'+e.name+'" data-title="'+(e.title||'')+'" data-desc="'+(e.description||'')+'" data-color="'+(e.color||'#5865F2')+'">'+e.name+'</option>').join('') : '');
+  document.getElementById('rrEmbedPreviewBox').style.display = 'none';
+
+  // ملء قائمة القنوات
+  const csel = document.getElementById('rrChannel');
+  csel.innerHTML = '<option value="">— اختر رومة —</option>' +
+    guildChannels.map(c=>'<option value="'+(c.channel_id||c.id)+'">＃ '+c.name+'</option>').join('');
+
+  document.getElementById('rrNextBtn1').disabled = true;
+  openModal('rrModal');
+}
+
+let rrSelectedEmbedId = null, rrSelectedEmbedName = '';
+
+function previewRREmbedSelect() {
+  const sel = document.getElementById('rrEmbedSelect');
+  const opt = sel.options[sel.selectedIndex];
+  const box = document.getElementById('rrEmbedPreviewBox');
+  if (!sel.value) { box.style.display='none'; document.getElementById('rrNextBtn1').disabled=true; return; }
+  rrSelectedEmbedId   = sel.value;
+  rrSelectedEmbedName = opt.dataset.name || '';
+  const color = opt.dataset.color || '#5865F2';
+  box.style.display = 'block';
+  box.innerHTML = '<div style="border-right:4px solid '+color+';background:var(--bg3);border-radius:6px;padding:12px 14px">'+
+    (opt.dataset.title  ? '<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+opt.dataset.title+'</div>'  : '')+
+    (opt.dataset.desc   ? '<div style="font-size:12px;color:var(--muted)">'+opt.dataset.desc.substring(0,120)+'</div>' : '')+
+    '<div style="font-size:11px;color:var(--muted2);margin-top:6px">📋 '+opt.dataset.name+'</div>'+
+  '</div>';
+  // تفعيل زر التالي فقط إذا اختار رومة أيضاً
+  checkRRStep1Ready();
+}
+
+function checkRRStep1Ready() {
+  const hasEmbed  = !!document.getElementById('rrEmbedSelect').value;
+  const hasChannel= !!document.getElementById('rrChannel').value;
+  document.getElementById('rrNextBtn1').disabled = !(hasEmbed && hasChannel);
+}
+
+function rrNextFromStep1() {
+  rrSelectedChannelId = document.getElementById('rrChannel').value;
+  if (!rrSelectedEmbedId || !rrSelectedChannelId) return toast('اختر إيمبداً ورومة','error');
+  rrGoStep(2);
+}
+
+function rrGoStep(step) {
+  [1,2,3].forEach(i => {
+    document.getElementById('rrPage'+i).style.display = i===step ? 'block' : 'none';
+    const el = document.getElementById('rrStepEl'+i);
+    el.className = 'rr-step' + (i < step ? ' done' : i===step ? ' active' : '');
+  });
+  if (step === 3) buildRRConfirm();
+}
+
+
+
+function selectRRMsgEl(el) {
+  selectRRMsg(el.dataset.msgid, el, el.dataset.preview);
+}
+function selectRRMsg(msgId, el, preview) {
+  document.querySelectorAll('.msg-pick-item').forEach(i=>{ i.style.background=''; i.style.borderRight='3px solid transparent'; });
+  el.style.background = 'var(--bg4)';
+  el.style.borderRight = '3px solid var(--fire1)';
+  rrSelectedMsgId = msgId;
+  rrSelectedMsgPreview = preview;
+  document.getElementById('rrNextBtn1').disabled = false;
+}
+
+function buildRRConfirm() {
+  const style   = document.getElementById('rrStyle').value;
+  const action  = document.getElementById('rrAction').value;
+  const optRows = document.querySelectorAll('#rrOptions .rr-opt-row');
+  const options = [];
+  for (const row of optRows) {
+    const emoji   = row.querySelector('.rr-opt-emoji-val')?.value.trim() || '';
+    const label   = row.querySelector('.rr-opt-label')?.value.trim() || '';
+    const roleEl  = row.querySelector('.rr-opt-role');
+    const role_id = roleEl?.value || '';
+    const color   = row.querySelector('.rr-opt-color')?.value || 'blurple';
+    if (label && role_id) options.push({emoji,label,role_id,color});
+  }
+  const chName  = guildChannels.find(c=>c.channel_id===rrSelectedChannelId)?.name || rrSelectedChannelId;
+  const actionL = {give:'✅ إعطاء',remove:'❌ سحب',toggle:'🔄 تبديل'}[action];
+  const styleL  = style==='button'?'🔘 أزرار':'📋 قائمة منسدلة';
+  let html = '<div style="margin-bottom:12px"><span class="chip chip-blue">＃ '+chName+'</span> <span class="chip chip-gold">'+styleL+'</span> <span class="chip chip-fire">'+actionL+'</span></div>';
+  if (rrSelectedMsgPreview) html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-style:italic">الرسالة: '+rrSelectedMsgPreview+'…</div>';
+  html += '<div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px">الرتب:</div>';
+  html += options.map(o => {
+    const rName = guildRoles.find(r=>r.role_id===o.role_id||r.id===o.role_id)?.name || o.role_id;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg4);border-radius:8px;margin-bottom:6px">'+
+      '<span style="font-size:16px">'+(o.emoji||'🔘')+'</span>'+
+      '<span class="preview-btn '+o.color+'" style="cursor:default;padding:5px 12px;font-size:12px">'+(o.emoji?o.emoji+' ':'')+o.label+'</span>'+
+      '<span style="font-size:12px;color:var(--muted)">→ @'+rName+'</span>'+
+    '</div>';
+  }).join('');
+  document.getElementById('rrConfirmBox').innerHTML = html;
+}
+let emojiPickerTarget = null;
+const COMMON_EMOJIS = ['😀','😂','😍','🥳','😎','🤩','🔥','⭐','💎','👑','🎮','🎵','🎨','📚','💪','🛡️','⚔️','🏆','🎯','🌟','✅','❌','🔴','🟢','🔵','🟡','🟠','⚪','⚫','🟣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','🅰️','🅱️','🆕','🆙','🔰'];
+
+function openEmojiPicker(btn) {
+  emojiPickerTarget = btn.closest('.rr-opt-row').querySelector('.rr-opt-emoji-val');
+  const guild_emojis = guildRoles._emojis || [];
+  const pickerEl = document.getElementById('emojiPickerContent');
+
+  let html = '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">إيموجيات السيرفر</div>';
+  if (guild_emojis.length) {
+    html += guild_emojis.map(e => '<button class="ep-btn" onclick="pickEmoji(\'' + e.val.replace(/'/g,"\\'") + '\',\'' + e.label.replace(/'/g,"\\'") + '\')" title="' + e.label + '"><img src="' + e.url + '" style="width:22px;height:22px"></button>').join('');
+  } else {
+    html += '<div style="font-size:12px;color:var(--muted)">لا توجد إيموجيات مخصصة في هذا السيرفر</div>';
+  }
+  html += '</div><div style="margin-bottom:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">إيموجيات عامة</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+  html += COMMON_EMOJIS.map(e => '<button class="ep-btn" onclick="pickEmoji(\'' + e + '\',\'\')" style="font-size:20px">' + e + '</button>').join('');
+  html += '</div>';
+  html += '<div style="margin-top:10px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">أو أدخل يدوياً</label><div style="display:flex;gap:6px"><input type="text" id="emojiManualInput" placeholder=":emoji_name: أو 😀" style="flex:1;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px"/><button class="btn btn-primary btn-sm" onclick="pickEmojiManual()">✓</button></div></div>';
+  pickerEl.innerHTML = html;
+  openModal('emojiPickerModal');
+}
+
+function pickEmoji(val, label) {
+  if (emojiPickerTarget) {
+    emojiPickerTarget.value = val;
+    emojiPickerTarget.closest('.rr-opt-row').querySelector('.rr-opt-emoji-btn').textContent = val || '😀';
+  }
+  closeModal('emojiPickerModal');
+}
+function pickEmojiManual() {
+  const val = document.getElementById('emojiManualInput').value.trim();
+  if (val) pickEmoji(val, val);
+}
+
+function addRROption() {
+  const idx = document.querySelectorAll('#rrOptions .rr-opt-row').length;
+  const div = document.createElement('div');
+  div.className = 'rr-opt-row';
+  div.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px';
+  const roleOptions = guildRoles.length > 0
+    ? '<select class="rr-opt-role" style="width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px">'+guildRoles.map(r=>'<option value="'+r.role_id+'">'+r.name+'</option>').join('')+'</select>'
+    : '<input type="text" class="rr-opt-role" placeholder="Role ID" style="width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px"/>';
+  div.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+      '<span style="font-size:12px;font-weight:700;color:var(--fire1)">رتبة '+(idx+1)+'</span>'+
+      '<button class="btn btn-danger btn-xs" onclick="this.closest(\'.rr-opt-row\').remove()">🗑 حذف</button>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">'+
+      '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">الإيموجي</label>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<button class="rr-opt-emoji-btn btn btn-secondary" style="font-size:18px;min-width:44px;padding:8px" onclick="openEmojiPicker(this)">😀</button>'+
+          '<input type="hidden" class="rr-opt-emoji-val rr-opt-emoji" value=""/>'+
+          '<span style="font-size:11px;color:var(--muted)">اضغط لاختيار</span>'+
+        '</div>'+
+      '</div>'+
+      '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">نص الزر</label>'+
+        '<input type="text" class="rr-opt-label" placeholder="مثال: رتبة VIP"/>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+      '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">الرتبة</label>'+roleOptions+'</div>'+
+      '<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">لون الزر</label>'+
+        '<select class="rr-opt-color" style="width:100%;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px">'+
+          '<option value="blurple">🟣 Blurple</option>'+
+          '<option value="green">🟢 أخضر</option>'+
+          '<option value="red">🔴 أحمر</option>'+
+          '<option value="grey">⚫ رمادي</option>'+
+        '</select>'+
+      '</div>'+
+    '</div>';
+  document.getElementById('rrOptions').appendChild(div);
+}
+async function saveRR() {
+  if (!currentGuild) return toast('اختر سيرفراً أولاً','error');
+  if (!rrSelectedEmbedId || !rrSelectedChannelId) return toast('اختر إيمبداً ورومة','error');
+  const style   = document.getElementById('rrStyle').value;
+  const action  = document.getElementById('rrAction').value;
+  const optRows = document.querySelectorAll('#rrOptions .rr-opt-row');
+  const options = [];
+  for (const row of optRows) {
+    const emoji   = row.querySelector('.rr-opt-emoji-val')?.value.trim() || '';
+    const label   = row.querySelector('.rr-opt-label')?.value.trim() || '';
+    const roleEl  = row.querySelector('.rr-opt-role');
+    const role_id = roleEl?.value || '';
+    const color   = row.querySelector('.rr-opt-color')?.value || 'blurple';
+    if (label && role_id) options.push({emoji,label,role_id,color});
+  }
+  if (!options.length) return toast('أضف رتبة واحدة على الأقل','error');
+  await ensureGuild();
+  await sbPost('reaction_roles', {
+    guild_id:    currentGuild.id,
+    channel_id:  rrSelectedChannelId,
+    embed_id:    rrSelectedEmbedId,
+    embed_name:  rrSelectedEmbedName,
+    style, action, options, sent: false
+  });
+  // البوت يرسل الإيمبد مع الأزرار
+  await sbPost('send_queue', {
+    guild_id: currentGuild.id,
+    type: 'send_embed_with_buttons',
+    payload: JSON.stringify({
+      embed_name:  rrSelectedEmbedName,
+      channel_id:  rrSelectedChannelId,
+      style, action, options
+    }),
+    done: false
+  });
+  closeModal('rrModal');
+  toast('✅ تم الحفظ — البوت سيُرسل الإيمبد مع الأزرار قريباً','success');
+  loadRR();
+}
+async function deleteRR(id) { await sbDelete('reaction_roles',id); toast('🗑 تم الحذف','success'); loadRR(); }
+
+function fmt(n) {
+  if (n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if (n>=1e3) return (n/1e3).toFixed(1)+'k';
+  return String(n);
+}
+</script>
+
+<!-- EMOJI PICKER MODAL -->
+<div class="modal-overlay" id="emojiPickerModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">😀 اختر إيموجي</div>
+      <button class="modal-close" onclick="closeModal('emojiPickerModal')">✕</button>
+    </div>
+    <div id="emojiPickerContent" style="max-height:350px;overflow-y:auto"></div>
+  </div>
+</div>
+</body>
+</html>
