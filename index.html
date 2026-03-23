@@ -101,12 +101,12 @@ select option{background:var(--bg3)}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);text-align:center}
 .empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}.empty-text{font-size:14px}
 .login-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center}
-.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:48px 52px;max-width:420px;width:100%;position:relative;overflow:hidden}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px 32px;max-width:420px;width:100%;position:relative;overflow:hidden;box-sizing:border-box}
 .login-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--fire3),var(--fire1),var(--fire2))}
 .login-logo{width:64px;height:64px;border-radius:16px;margin:0 auto 20px;background:linear-gradient(135deg,var(--fire3),var(--fire1));display:flex;align-items:center;justify-content:center;font-size:30px}
 .login-title{font-size:24px;font-weight:700;margin-bottom:8px}
 .login-sub{font-size:14px;color:var(--muted);margin-bottom:32px;line-height:1.6}
-.btn-discord{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:12px;background:var(--discord);color:#fff;font-size:15px;font-weight:700;font-family:var(--font);border:none;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-discord{display:flex !important;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:12px;background:var(--discord);color:#fff;font-size:15px;font-weight:700;font-family:var(--font);border:none;cursor:pointer;transition:all .2s;text-decoration:none;-webkit-appearance:none;box-sizing:border-box}
 .btn-discord:hover{background:#4752c4;transform:translateY(-2px)}
 .discord-logo{width:22px;height:22px;fill:#fff}
 .login-footer{margin-top:20px;font-size:11px;color:var(--muted)}
@@ -601,6 +601,12 @@ const SUPABASE_ANON = 'sb_publishable_FFVV0x1bDPM7dCP6Ef1xCw_czL6clQq';
 const DISCORD_CLIENT_ID    = '1483147090191188099';
 const DISCORD_REDIRECT_URI = window.location.origin + window.location.pathname;
 
+// ══ قائمة المسموح لهم فقط بالدخول (أضف Discord User IDs هنا) ══
+const ALLOWED_USER_IDS = [
+  '148314709019118809',   // Cors Craft (أنت)
+  // أضف IDs آخرين هنا إن أردت
+];
+
 // أضف Bot Token هنا لتفعيل إرسال مباشر للرومات وجلب الرتب تلقائياً
 const BOT_TOKEN = '';
 
@@ -630,7 +636,16 @@ async function loadUser() {
   try {
     const r = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + accessToken } });
     if (!r.ok) throw 0;
-    currentUser = await r.json(); showDashboard(); loadGuilds();
+    currentUser = await r.json();
+    // التحقق من الصلاحية
+    if (ALLOWED_USER_IDS.length > 0 && !ALLOWED_USER_IDS.includes(currentUser.id)) {
+      localStorage.removeItem('discord_token');
+      accessToken = null; currentUser = null;
+      showLoginPage();
+      setTimeout(() => alert('⛔ ليس لديك صلاحية للوصول إلى لوحة التحكم.'), 100);
+      return;
+    }
+    showDashboard(); loadGuilds();
   } catch { localStorage.removeItem('discord_token'); showLoginPage(); }
 }
 async function loadGuilds() {
