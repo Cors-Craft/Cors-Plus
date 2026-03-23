@@ -637,14 +637,7 @@ async function loadUser() {
     const r = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + accessToken } });
     if (!r.ok) throw 0;
     currentUser = await r.json();
-    // التحقق من الصلاحية
-    if (ALLOWED_USER_IDS.length > 0 && !ALLOWED_USER_IDS.includes(currentUser.id)) {
-      localStorage.removeItem('discord_token');
-      accessToken = null; currentUser = null;
-      showLoginPage();
-      setTimeout(() => alert('⛔ ليس لديك صلاحية للوصول إلى لوحة التحكم.'), 100);
-      return;
-    }
+    // الجميع يمكنه تسجيل الدخول - الفلترة تحدث على مستوى السيرفرات
     showDashboard(); loadGuilds();
   } catch { localStorage.removeItem('discord_token'); showLoginPage(); }
 }
@@ -800,7 +793,9 @@ document.addEventListener('click', e => {
 // Show/hide menu toggle button
 function checkMobile() {
   const btn = document.getElementById('menuToggle');
+  const lo  = document.getElementById('mobileLogoutBtn');
   if (btn) btn.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+  if (lo)  lo.style.display  = window.innerWidth <= 768 ? 'block' : 'none';
 }
 window.addEventListener('resize', checkMobile);
 window.addEventListener('DOMContentLoaded', checkMobile);
@@ -817,7 +812,9 @@ document.addEventListener('click', e => {
 });
 function checkMobile() {
   const btn = document.getElementById('menuToggle');
+  const lo  = document.getElementById('mobileLogoutBtn');
   if (btn) btn.style.display = window.innerWidth <= 768 ? 'block' : 'none';
+  if (lo)  lo.style.display  = window.innerWidth <= 768 ? 'block' : 'none';
 }
 window.addEventListener('resize', checkMobile);
 setTimeout(checkMobile, 100);
